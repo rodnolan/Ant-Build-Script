@@ -1,0 +1,618 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!--
+ *
+ * Copyright 2012 Research In Motion Limited.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ -->
+<project basedir="." name="buildTasks">
+	<!-- <echo>${ant.project.name}.xml loaded</echo> -->
+
+
+	<!-- load property file where you must set all your build environment variables -->
+	<dirname property="buildTasks.basedir" file="${ant.file.buildTasks}"/>
+	<property file="${buildTasks.basedir}/buildTasks.properties"/>
+
+    <condition property="osSpecificPropertiesFileName" value="buildWin.properties" else="buildMac.properties">
+        <os family="windows"/>
+    </condition>
+    <property file="${buildTasks.basedir}/${osSpecificPropertiesFileName}"/>
+
+    <!-- set the .bat extension for windows machines -->
+	<condition property="commandExtension" value=".bat" else="">
+		<os family="windows"/>
+	</condition>
+
+
+    <!-- Build Tool locations -->
+    <property name="tools.dir" value="${anthome}/.."/>
+    <!-- must set the ANT_HOME environment variable to X:\Ant-Build-Script\tools\apache-ant-1.8.2 -->
+    <!-- also set PATH=%PATH%;%ANT_HOME%\bin -->
+
+    <!--PATH=/Users/rodnolan/Development/rodnolan/BB10-WebWorks-Community-Samples/Ant-Build-Script/tools/apache-ant-1.8.2:$PATH-->
+    <!--http://techxplorer.com/2011/02/26/installing-apache-ant-on-mac-os-x/-->
+
+
+    <!-- this enables the use of if-then-else in the "doBuild" target; see http://ant-contrib.sourceforge.net -->
+    <!--<taskdef resource="net/sf/antcontrib/antcontrib.properties" />-->
+    <taskdef resource="net/sf/antcontrib/antlib.xml">
+        <classpath>
+            <pathelement location="${anthome}/lib/ant-contrib-0.6.jar"/>
+        </classpath>
+    </taskdef>
+
+	<!-- Files to exclude from zip -->
+	<property name="file.excludes" value="${file.excludes}"/>
+
+	<!-- Build Tool locations -->
+	<property name="tools.dir" value="${anthome}/.."/>
+
+
+	<property name="yui.dir" value="${tools.dir}/yuicompressor-2.4.7"/>
+	<property name="rhino.dir" value="${tools.dir}/rhino1_7R3"/>
+	<property name="yui.jar" value="${yui.dir}/build/yuicompressor-2.4.7.jar"/>
+	<property name="rhino.jar" value="${rhino.dir}/js.jar"/>
+	<property name="jslint.js" value="${tools.dir}/fulljslint.js"/>
+	<property name="jshint.js" value="${tools.dir}/fulljshint.js"/>
+	<property name="csslint.js" value="${tools.dir}/csslint-rhino.js"/>
+
+	<!-- Build Tool options -->
+	<property name="tool.jslint.opts" value=""/>
+	<property name="tool.jshint.opts" value=""/>
+	<property name="tool.csslint.opts" value=""/>
+
+	<!-- Concatenation destinations -->
+	<property name="jsconcat" value="${jsconcat.filename}"/>
+	<property name="cssconcat" value="${cssconcat.filename}"/>
+
+	<!-- Fail the build on JSLint, JSHint, CSSLint errors -->
+	<property name="lintfail" value="${abortonlintfail}"/>
+
+
+	<!-- Build Directories, all build assets are kept with the project -->
+	<property name="src.dir" value="${basedir}"/>
+
+	<!-- iused by the lint and minify tools -->
+	<property name="src.js.dir" value="${basedir}/js"/>
+	<property name="src.css.dir" value="${basedir}/css"/>
+
+
+	<!-- Output directories for files, everything lives with the project -->
+	<property name="bin.basedir" value="bin"/>
+
+
+
+	<!-- Code Signing Password -->
+	<property name="sign.pw" value="${sign.pw}"/>
+
+
+	<!-- JAVA -->
+	<!-- to deploy to Java device (only password is needed) -->
+	<property name="java.device.pw" value="${java.device.pw}" />
+	<property name="wwsdk.java.dir" value="${wwsdk.java.dir}"/>
+	<property name="bin.java" value="${bin.basedir}/java"/>
+	<!-- PACKAGING TARGETS for Java/Smartphone -->
+
+		<!-- unsigned, with debug token -->
+		<target name="package.java.debug"  description="for Java Smartphone - Debug">
+			<exec executable="${wwsdk.java.dir}/bbwp">
+				<arg line="${zip.name} -d -s -o ${bin.java}${bin.debug}"/>
+			</exec>
+			<echo>Finished</echo>
+		</target>
+
+		<!-- signed, no debug token -->
+		<target name="package.java.release"  description="Java Smartphone - Release">
+			<exec executable="${wwsdk.java.dir}/bbwp">
+				<arg line="${zip.name} -g ${sign.pw} -o ${bin.java}"/>
+			</exec>
+			<echo>Finished</echo>
+		</target>
+
+
+		<!-- signed, with debug token -->
+		<target name="package.java.beta"  description="for Java Smartphone - Beta">
+			<exec executable="${wwsdk.java.dir}/bbwp">
+				<arg line="${zip.name} -g ${sign.pw} -d -o ${bin.java}${bin.beta}"/>
+			</exec>
+			<echo>Finished</echo>
+		</target>
+
+
+
+	<!-- DEPLOYMENT TARGETS for Java/Smartphone -->
+		<!-- simulator -->
+		<!-- device -->
+		<target name="deploy.java.device.release" depends="package.java.release" description="Javaloader for release build">
+			<exec executable="${wwsdk.java.dir}/bin/JavaLoader">
+				<arg line="-u -w${java.device.pw} load ${bin.java}/OTAInstall/${ant.project.name}.jad"/>
+			</exec>
+		</target>
+
+		<target name="deploy.java.device.debug" depends="package.java.debug" description="Javaloader for debug build">
+			<exec executable="${wwsdk.java.dir}/bin/JavaLoader">
+				<arg line="-u -w${java.device.pw} load ${bin.java}${bin.debug}/OTAInstall/${ant.project.name}.jad"/>
+			</exec>
+		</target>
+
+		<target name="deploy.java.device.beta" depends="package.java.beta" description="Javaloader for beta build">
+			<exec executable="${wwsdk.java.dir}/bin/JavaLoader">
+				<arg line="-u -w${java.device.pw} load ${bin.java}${bin.beta}/OTAInstall/${ant.project.name}.jad"/>
+			</exec>
+		</target>
+
+
+
+	<!-- TABLET properties -->
+	<property name="tablet.ip.device" value="${tablet.ip.device}"/>
+	<property name="tablet.ip.sim" value="${tablet.ip.sim}"/>
+	<property name="tablet.pw" value="${tablet.pw}" />
+
+	<property name="wwsdk.tablet.dir" value="${wwsdk.tablet.dir}"/>
+	<property name="bin.tablet" value="${bin.basedir}/tablet"/>
+
+	<!-- PACKAGE for PlayBook -->
+	<target name="package.tablet.debug"  description="unsigned, WebInspector enabled, for the simulator or my PlayBook with my debug token">
+		<exec executable="${wwsdk.tablet.dir}/bbwp/bbwp">
+			<arg line="${zip.name} -d -s -o ${bin.tablet}${bin.debug}"/>
+		</exec>
+		<echo>Finished</echo>
+	</target>
+
+	<target name="package.tablet.beta"  description="signed, WebInspector enabled, for tester's PlayBook(s)">
+		<local name="build.number"/>
+		<buildnumber/>
+		<exec executable="${wwsdk.tablet.dir}/bbwp/bbwp">
+			<arg line="${zip.name} -g ${sign.pw} -buildId ${build.number} -d -o ${bin.tablet}${bin.beta}"/>
+		</exec>
+		<echo>Finished</echo>
+	</target>
+
+	<target name="package.tablet.release"  description="signed, no WebInspector, for App World">
+		<local name="build.number"/>
+		<buildnumber/>
+		<exec executable="${wwsdk.tablet.dir}/bbwp/bbwp">
+			<arg line="${zip.name} -g ${sign.pw} -buildId ${build.number} -o ${bin.tablet}"/>
+		</exec>
+		<echo>Finished</echo>
+	</target>
+
+
+	<!-- DEPLOY TO PlayBook -->
+	<!-- simulator -->
+	<target name="deploy.tablet.sim.debug"  description="Deploy debug build to PlayBook simulator">
+		<exec executable="${wwsdk.tablet.dir}/bbwp/blackberry-tablet-sdk/bin/blackberry-deploy${commandExtension}">
+			<arg line="-installApp -launchApp -password ${tablet.pw} -device ${tablet.ip.sim} -package ${bin.tablet}${bin.debug}/${ant.project.name}.bar"/>
+		</exec>
+	</target>
+
+	<!-- device -->
+	<target name="deploy.tablet.device.debug"  description="Deploy debug build to my PlayBook configured with my debug token">
+		<exec executable="${wwsdk.tablet.dir}/bbwp/blackberry-tablet-sdk/bin/blackberry-deploy${commandExtension}">
+			<arg line="-installApp -launchApp -password ${tablet.pw} -device ${tablet.ip.device} -package ${bin.tablet}${bin.debug}/${ant.project.name}.bar"/>
+		</exec>
+	</target>
+
+	<target name="deploy.tablet.device.beta"  description="Deploy signed build with WebInspector to tester's PlayBook without my debug token">
+		<exec executable="${wwsdk.tablet.dir}/bbwp/blackberry-tablet-sdk/bin/blackberry-deploy${commandExtension}">
+			<arg line="-installApp -launchApp -password ${tablet.pw} -device ${tablet.ip.device} -package ${bin.tablet}${bin.beta}/${ant.project.name}.bar"/>
+		</exec>
+	</target>
+
+	<target name="deploy.tablet.device.release"  description="Deploy signed build with no WebInspector to any PlayBook">
+		<exec executable="${wwsdk.tablet.dir}/bbwp/blackberry-tablet-sdk/bin/blackberry-deploy${commandExtension}">
+			<arg line="-installApp -launchApp -password ${tablet.pw} -device ${tablet.ip.device} -package ${bin.tablet}/${ant.project.name}.bar"/>
+		</exec>
+	</target>
+
+
+
+
+
+	<!-- BB10 properties -->
+	<property name="bb10.ip.device" value="${bb10.ip.device}"/>
+	<property name="bb10.ip.sim" value="${bb10.ip.sim}"/>
+	<property name="bb10.pw" value="${bb10.pw}" />
+
+	<property name="bin.bb10" value="${bin.basedir}/bb10"/>
+	<property name="wwsdk.bb10.dir" value="${wwsdk.bb10.dir}"/>
+
+	<!-- PACKAGE for BB10 -->
+	<target name="package.bb10.debug"  description="unsigned, WebInspector enabled, for the simulator or my BB10 Dev Alpha with my debug token">
+		<exec executable="${wwsdk.bb10.dir}/bbwp${commandExtension}">
+			<arg line="${zip.name} -d -s -o ${bin.bb10}${bin.debug}"/>
+		</exec>
+		<echo>Finished</echo>
+	</target>
+
+	<target name="package.bb10.beta"  description="signed, WebInspector enabled, for tester's BB10 Dev Alpha(s)">
+		<local name="build.number"/>
+		<buildnumber/>
+		<exec executable="${wwsdk.bb10.dir}/bbwp${commandExtension}">
+			<arg line="${zip.name} -g ${sign.pw} --buildId ${build.number} -d -o ${bin.bb10}${bin.beta}"/>
+		</exec>
+		<echo>Finished</echo>
+	</target>
+
+	<target name="package.bb10.release"  description="signed, no WebInspector, for App World">
+		<local name="build.number"/>
+		<buildnumber/>
+		<exec executable="${wwsdk.bb10.dir}/bbwp${commandExtension}">
+			<arg line="${zip.name} -g ${sign.pw} --buildId ${build.number} -o ${bin.bb10}"/>
+		</exec>
+		<echo>Finished</echo>
+	</target>
+
+	<!-- DEPLOY to BB10 -->
+	<!-- simulator -->
+	<target name="deploy.bb10.sim.debug"  description="Deploy debug build to BB10 Dev Alpha simulator">
+		<exec executable="${wwsdk.bb10.dir}/dependencies/tools/bin/blackberry-deploy${commandExtension}">
+			<arg line="-installApp -launchApp -password ${bb10.pw} -device ${bb10.ip.sim} -package ${bin.bb10}${bin.debug}/simulator/${ant.project.name}.bar"/>
+		</exec>
+	</target>
+
+	<!-- device -->
+	<target name="deploy.bb10.device.debug"  description="Deploy debug build to my BB10 Dev Alpha configured with my debug token">
+		<exec executable="${wwsdk.bb10.dir}/dependencies/tools/bin/blackberry-deploy${commandExtension}">
+			<arg line="-installApp -launchApp -password ${bb10.pw} -device ${bb10.ip.device} -package ${bin.bb10}${bin.debug}/device/${ant.project.name}.bar"/>
+		</exec>
+	</target>
+
+	<target name="deploy.bb10.device.beta"  description="Deploy signed build with WebInspector to tester's BB10 Dev Alpha without my debug token">
+		<exec executable="${wwsdk.bb10.dir}/dependencies/tools/bin/blackberry-deploy${commandExtension}">
+			<arg line="-installApp -launchApp -password ${bb10.pw} -device ${bb10.ip.device} -package ${bin.bb10}${bin.beta}/device/${ant.project.name}.bar"/>
+		</exec>
+	</target>
+
+	<target name="deploy.bb10.device.release"  description="Deploy signed build with no WebInspector to any BB10 Dev Alpha">
+		<exec executable="${wwsdk.bb10.dir}/dependencies/tools/bin/blackberry-deploy${commandExtension}">
+			<arg line="-installApp -launchApp -password ${bb10.pw} -device ${bb10.ip.device} -package ${bin.bb10}/device/${ant.project.name}.bar"/>
+		</exec>
+	</target>
+
+
+
+	<!-- Ripple -->
+	<!-- Use RippleSites or a WebServer to host the project for testing in Ripple -->
+	<property name="ripple.dir" value="${ripple.basedir}/${ant.project.name}"/>
+
+	<!-- copy project to Ripple -->
+	<target name="ripple" depends="copy.src.to.build">
+		<copy todir="${ripple.dir}">
+			<fileset dir="${build.basedir}"/>
+		</copy>
+	</target>
+
+
+
+
+
+	<!-- Append this value to the Output Directory for debug builds -->
+	<property name="bin.debug" value="-debug"/>
+	<!-- Append this value to the Output Directory for beta builds -->
+	<property name="bin.beta" value="-beta"/>
+
+	<property name="build.basedir" value="${bin.basedir}/src"/>
+
+	<property name="zip.name" value="${bin.basedir}/${ant.project.name}.zip"/>
+
+	<!-- required by the concatenate and minify tasks -->
+	<property name="build.js.dir" value="${build.basedir}/js"/>
+	<property name="build.css.dir" value="${build.basedir}/css"/>
+
+
+	<!-- called by init but may also be used on demand to remove old build artifacts -->
+	<target name="clean">
+		<delete dir="bin" quiet="true"/>
+		<echo>Finished clean</echo>
+	</target>
+
+	<!-- creates the build folder -->
+	<target name="init">
+		<mkdir dir="${build.basedir}"/>
+		<!--<mkdir dir="${build.js.dir}"/>
+		<mkdir dir="${build.css.dir}"/>-->
+        <echo>Finished init</echo>
+	</target>
+
+	<!-- copies all relevant files to build directory -->
+	<target name="copy.src.to.build">
+		<copy todir="${build.basedir}">
+			<fileset dir="${src.dir}" excludes="${file.excludes}"/>
+		</copy>
+        <echo>Finished copy.src.to.build</echo>
+	</target>
+
+	<!-- archives the application's assets -->
+	<target name="zip">
+		<zip basedir="${build.basedir}" destfile="${zip.name}"/>
+	</target>
+
+	<target name="package.preflight">
+		<echo>doing preflight tasks</echo>
+        <sequential>
+			<antcall target="buildTasks.clean" />
+			<antcall target="buildTasks.init" />
+			<antcall target="buildTasks.copy.src.to.build" />
+			<antcall target="buildTasks.zip" />
+		</sequential>
+        <echo>Finished preflight tasks</echo>
+	</target>
+
+
+
+
+	<!-- Debug token tasks -->
+
+	<target name="createDebugToken.bb10">
+		<exec executable="${wwsdk.bb10.dir}/dependencies/tools/bin/blackberry-debugtokenrequest${commandExtension}">
+			<arg line="-storepass ${sign.pw} -devicepin ${bb10.pin} debugtoken.bar"/>
+		</exec>
+		<move file="debugtoken.bar" todir="${wwsdk.bb10.dir}"/>
+	</target>
+
+	<target name="deployDebugToken.bb10">
+		<exec executable="${wwsdk.bb10.dir}/dependencies/tools/bin/blackberry-deploy${commandExtension}">
+			<arg line="-installDebugToken '${wwsdk.bb10.dir}/debugtoken.bar' -device ${bb10.ip.device} -password ${bb10.pw}"/>
+		</exec>
+	</target>
+
+	<target name="createDebugToken.tablet">
+		<exec executable="${wwsdk.tablet.dir}/bbwp/blackberry-tablet-sdk/bin/blackberry-debugtokenrequest${commandExtension}">
+			<arg line="-storepass ${sign.pw} -devicepin ${tablet.pin} playbookdebugtoken.bar"/>
+		</exec>
+		<move file="playbookdebugtoken.bar" todir="${user.home}"/>
+	</target>
+
+	<target name="deployDebugToken.tablet">
+		<exec executable="${wwsdk.tablet.dir}/bbwp/blackberry-tablet-sdk/bin/blackberry-deploy${commandExtension}">
+			<arg line="-installDebugToken '${user.home}/playbookdebugtoken.bar' -device ${tablet.ip.device} -password ${tablet.pw}"/>
+		</exec>
+	</target>
+
+	<target name="setDebugToken.tablet">
+		<echo message="Edit ${wwsdk.tablet.dir}/bbwp/bin/bbwp.properties" />
+		<echo message="Ensure that the debug_token node is set to: ${user.home}/playbookdebugtoken.bar" />
+	</target>
+
+
+
+
+
+
+
+    <target name="doBuild">
+
+        <!-- set do.build.ripple in your build.xml file to true to copy files to your RippleSites/${ant.project.name}  -->
+        <if><equals arg1="${do.build.ripple}" arg2="true" />
+            <then>
+                <echo message="copying files for ripple emulation" />
+                <antcall target="buildTasks.ripple" />
+            </then>
+        </if>
+
+        <!-- set use.java.sdk in your build.xml file to true to trigger a java build -->
+        <if><equals arg1="${use.java.sdk}" arg2="true" />
+            <then>
+                <echo message="building for java" />
+                <antcall target="${buildTasks.deploy.java.sim.debug}" />
+            </then>
+        </if>
+
+        <!-- set do.tablet in your build.xml file to true to trigger a tablet build -->
+		<if><equals arg1="${do.tablet}" arg2="true" />
+			<then>
+				<echo message="building for PlayBook" />
+
+				<!-- create the requested packages -->
+				<for list="${tablet.package.types}" param="packagetype">
+					<sequential>
+						<echo>doing @{packagetype} build for PlayBook</echo>
+						<antcall target="buildTasks.package.tablet.@{packagetype}" />
+					</sequential>
+				</for>
+
+				<!-- optionally, deploy the requested build to the PlayBook device -->
+				<if><equals arg1="${tablet.deploy.device}" arg2="false" />
+					<then>
+						<echo message="skipping PlayBook device deployment" />
+					</then>
+					<else>
+						<antcall target="buildTasks.deploy.tablet.device.${tablet.deploy.device}" />
+					</else>	
+				</if> 
+
+				<!-- deploy the debug build to the PlayBook simulator -->
+ 				<if>
+					<equals arg1="${tablet.deploy.sim}" arg2="true" />
+					<then>
+						<echo message="deploying a debug build to PlayBook sim" />
+						<antcall target="buildTasks.deploy.tablet.sim.debug" />
+					</then>
+					<else>
+						<echo message="skipping PlayBook simulator deployment" />
+					</else>	
+				</if>
+			</then>
+		</if>
+
+		<!-- set do.bb10 in your build.xml file to true to trigger a bb10 build -->
+		<if><equals arg1="${do.bb10}" arg2="true" />
+			<then>
+				<echo message="building for BB10" />
+
+				<!-- create the requested packages -->
+				<for list="${bb10.package.types}" param="packagetype">
+					<sequential>
+						<echo>doing @{packagetype} build for BB10</echo>
+						<antcall target="buildTasks.package.bb10.@{packagetype}" />
+					</sequential>
+				</for>
+
+				<!-- optionally, deploy the requested build to the device -->
+				<if><equals arg1="${bb10.deploy.device}" arg2="false" />
+					<then>
+						<echo message="skipping BB10 device deployment" />
+					</then>
+					<else>
+						<antcall target="buildTasks.deploy.bb10.device.${bb10.deploy.device}" />
+					</else>	
+				</if> 
+
+				<!-- deploy the debug build to the simulator -->
+ 				<if>
+					<equals arg1="${bb10.deploy.sim}" arg2="true" />
+					<then>
+						<echo message="deploying a debug build to BB10 sim" />
+						<antcall target="buildTasks.deploy.bb10.sim.debug" />
+					</then>
+					<else>
+						<echo message="skipping BB10 simulator deployment" />
+					</else>	
+				</if>
+			</then>
+		</if>
+
+	</target>
+
+
+
+
+
+
+
+
+	<!-- Optimization Tasks -->
+
+	<target name="optimize" depends="lint,minify"></target>
+
+	<target name="lint" depends="jslint,jshint,csslint"></target>
+
+	<target name="minify" depends="js.minify,css.minify"></target>
+
+
+	<!-- JSLint target, run separately -->
+	<target name="jslint">
+	  <apply dir="${src.js.dir}" executable="java" parallel="false" failonerror="${lintfail}">
+			<fileset dir="${src.js.dir}">
+				<include name="**/*.js"/>
+				<exclude name="**/*.min.js"/>
+			</fileset>
+			<arg value="-jar" />
+			<arg path="${rhino.jar}" />
+			<arg path="${jslint.js}" />
+			<srcfile/>
+			<arg value="${tool.jslint.opts}" />
+		</apply>
+		<echo>JSLint Successful</echo>
+	</target>
+
+	<!-- JSHint target, run separately -->
+	<target name="jshint">
+		<apply dir="${src.js.dir}" executable="java" parallel="false" failonerror="${lintfail}">
+			<fileset dir="${src.js.dir}">
+				<include name="**/*.js"/>
+				<exclude name="**/*.min.js"/>
+			</fileset>
+			<arg value="-jar" />
+			<arg path="${rhino.jar}" />
+			<arg path="${jshint.js}" />
+			<srcfile/>
+			<arg value="${tool.jshint.opts}" />
+		</apply>
+		<echo>JSHint Successful</echo>
+	</target>
+
+	<!-- CSSLint target, run separately -->
+	<target name="csslint">
+		<apply dir="${src.css.dir}" executable="java" parallel="false" failonerror="${lintfail}">
+			<fileset dir="${src.css.dir}">
+				<include name="**/*.css"/>
+				<exclude name="**/*.min.css"/>
+			</fileset>
+			<arg value="-jar" />
+			<arg path="${rhino.jar}" />
+			<arg path="${csslint.js}" />
+			<srcfile/>
+			<arg value="${tool.csslint.opts}" />
+		</apply>
+		<echo>CSSLint Successful</echo>
+	</target>
+
+	 <!--Concatenate JS files-->
+	<target name="js.concatenate"
+		description="Concatenates specified JavaScript files">
+		<concat destfile="${build.js.dir}/${jsconcat}">
+			<fileset
+				dir="${src.js.dir}"
+				includes="*.js" />
+		</concat>
+		<echo>Finished</echo>
+	</target>
+
+	<!--Concatenate CSS files-->
+	<target name="css.concatenate"
+		description="Concatenates specified CSS files">
+		<concat destfile="${build.css.dir}/${cssconcat}">
+			<fileset
+				dir="${src.css.dir}"
+				includes="*.css"/>
+		</concat>
+		<echo>Finished</echo>
+	</target>
+
+	<!--Minify JS files-->
+	<target name="js.minify" depends="js.concatenate,copy.src.to.build"
+		description="Minifies JavaScript files">
+		<apply executable="java" parallel="false" dest="${build.js.dir}">
+			<fileset
+				dir="${build.js.dir}"
+				includes="${jsconcat}"/>
+			<arg line="-jar"/>
+			<arg path="${yui.jar}"/>
+			<srcfile/>
+			<arg line="-o"/>
+			<mapper type="glob" from="*.js" to="*.js-min"/>
+			<targetfile/>
+		</apply>
+		<delete>
+			<fileset dir="${build.js.dir}" includes="*.js" excludes="*.js-min"/>
+		</delete>
+		<move file="${build.js.dir}/${jsconcat}-min" tofile="${build.js.dir}/${jsconcat}"/>
+		<echo>Finished</echo>
+	</target>
+
+	<!--Minify CSS files-->
+	<target name="css.minify" depends="css.concatenate,copy.src.to.build"
+		description="Minifies CSS files">
+		<apply executable="java" parallel="false"  dest="${build.css.dir}">
+			<fileset
+				dir="${build.css.dir}"
+				includes="${cssconcat}"/>
+			<arg line="-jar"/>
+			<arg path="${yui.jar}"/>
+			<arg line="--line-break 0"/>
+			<srcfile/>
+			<arg line="-o"/>
+			<mapper type="glob" from="*.css" to="*.css-min"/>
+			<targetfile/>
+		</apply>
+		<delete>
+			<fileset dir="${build.css.dir}" includes="*.css" excludes="*.css-min"/>
+		</delete>
+		<move file="${build.css.dir}/${cssconcat}-min" tofile="${build.css.dir}/${cssconcat}"/>
+		<echo>Finished</echo>
+	</target>
+
+</project>

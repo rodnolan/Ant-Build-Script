@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<!-- Set name to the application name: used for BAR/COD and directory on file system -->
+<project default="build" basedir="." name="projectName">
+
+	<!-- this enables the use of if-then-else in the "build" target below; see http://ant-contrib.sourceforge.net -->
+	<taskdef resource="net/sf/antcontrib/antcontrib.properties" />
+
+	<echo>Building project ${ant.project.name}</echo>
+
+	<property environment="ENV" />
+	<echo>ant.home: ${ant.home}</echo>
+
+	<!-- include the targets that do the actual work
+	<include file="${ant.home}\..\buildTasks.xml" />-->
+
+
+	<target name="build">
+
+		<property name="os" value="placeholder os value" />
+		<osfamily property="os" />
+
+		<echo>You are running on ${os}</echo>
+
+	</target>
+
+</project>
+
