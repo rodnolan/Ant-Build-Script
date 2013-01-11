@@ -61,13 +61,13 @@ The build.xml file is meant to be placed in the project's root directory and mod
 
 2. Set the name attribute to something project specific in <project default="build" basedir="." name="projectName">.
 
-3. Set the values for the properties on lines 37 to 51 according to your needs.
+3. Set the values for the properties according to your needs.
 
 4. Ensure that Development Mode is turned on for your PlayBook and/or BB10.
 
 5. Open a command prompt and navigate to your project's root directory (where build.xml is located).
 
-6. If you haven't already done so, create and deploy a debug token to your target device(s). This requires you to have configured your signing keys. Also note that this must be done every 30 days since debug tokens do not last forever.
+6. If you haven't already done so, create and deploy a debug token to your target device(s). This must be done every 30 days since debug tokens do expire. To create debug tokens and signed applications you must apply for and configure code signing keys. See https://www.blackberry.com/SignedKeys/ for more information.
 
 ```{project-root-folder}:/>ant createAndDeployDebugToken```
 
@@ -80,7 +80,7 @@ The build.xml file is meant to be placed in the project's root directory and mod
 
 1. The functionality related to Java Smartphones is not tested. This version focusses on BB10.
 
-2. The optimization-related stuff is included but it's simmering on the back burner. 
+2. The optimization-related stuff is included in buildTasks.xml but its functionality has not been easily exposed in build.xml. 
 
 
 ## Dependencies
@@ -101,7 +101,7 @@ The script is dependent on several tools:
 
 ## Credits
 
-This project was inspired by and based on the work of [Tim Windsor](https://github.com/timwindsor) who was inspired by [Addy Osmani](http://addyosmani.com/blog/client-side-build-process/) and the [HTML5 Boilerplate Ant Script](https://github.com/h5bp/ant-build-script) project. Tim tweaked Addy's work by adding BlackBerry WebWorks targets. I tweaked Tim's work by introducing properties files to compartmentalize the things that had to change from developer to developer, environment to environment, project to project. This project was necessary to overcome the sometimes cumbersome process of building and deploying projects using the Ripple Mobile Environment Emulator and/or the command line. 
+This project was inspired by and based on the work of [Tim Windsor](https://github.com/timwindsor) who was inspired by [Addy Osmani](http://addyosmani.com/blog/client-side-build-process/) and the [HTML5 Boilerplate Ant Script](https://github.com/h5bp/ant-build-script) project. Tim tweaked Addy's work by adding BlackBerry WebWorks targets. I tweaked Tim's work by introducing properties files to compartmentalize the things that had to change from developer to developer, environment to environment, project to project. I developed this script to replace the Ripple Mobile Environment Emulator and/or the command line for building and deploying WebWorks applications. 
 
 ## License
 
