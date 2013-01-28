@@ -22,7 +22,7 @@ This is an Ant build script for building BlackBerry WebWorks applications for Bl
 
 3. You must download and install the WebWorks SDKs you wish to use. See https://developer.blackberry.com/html5/download/.
 
-4. Grab the script from https://github.com/rodnolan/BB10-WebWorks-Community-Samples/archive/master.zip. Extract it to a convenient location.
+4. Grab the script from https://github.com/rodnolan/Ant-Build-Script/archive/master.zip. Extract it to a convenient location.
 
 5. Append your PATH environment variable with {install-path}\Ant-Build-Script\tools\apache-ant-1.8.2\bin. This will simplify the process of executing your build script against each of your projects. 
 
