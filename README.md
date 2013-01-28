@@ -22,7 +22,7 @@ This is an Ant build script for building BlackBerry WebWorks applications for Bl
 
 3. You must download and install the WebWorks SDKs you wish to use. See https://developer.blackberry.com/html5/download/.
 
-4. Grab the script from https://github.com/rodnolan/BB10-WebWorks-Community-Samples/archive/master.zip. Extract it to a convenient location.
+4. Grab the script from https://github.com/rodnolan/Ant-Build-Script/archive/master.zip. Extract it to a convenient location.
 
 5. Append your PATH environment variable with {install-path}\Ant-Build-Script\tools\apache-ant-1.8.2\bin. This will simplify the process of executing your build script against each of your projects. 
 
@@ -42,7 +42,7 @@ The project is designed to work in two parts:
 
 ## Initial, general setup
 
-I hope the property names are clear and self-explanatory. If not, drop me a line at rodn@newyyz.com.
+I hope the property names are clear and self-explanatory. If not, drop me a line at rodnolan@gmail.com.
 
 1. Open __{install-path}\Ant-Build-Script\tools\buildTasks.properties__ and update each property to match your specific values. You may want to create shortcut to this file since you'll have to update it each time your device/sim gets a new IP address. 
 
@@ -59,7 +59,7 @@ The build.xml file is meant to be placed in the project's root directory and mod
 
 1. Copy __{install-path}\Ant-Build-Script\build.xml__ into your project.
 
-2. Set the name attribute to something project specific in <project default="build" basedir="." name="projectName">.
+2. Set the name attribute to something project specific in ```<project default="build" basedir="." name="projectName">```.
 
 3. Set the values for the properties according to your needs.
 
