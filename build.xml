@@ -4,7 +4,7 @@
 <project default="build" basedir="." name="projectName">
 
 	<!-- Update these paths for your environment -->
-	<property name="anthome.mac" value="/Users/rodnolan/Ant-Build-Script/tools/apache-ant-1.8.2" />
+	<property name="anthome.mac" value="/Users/rodnolan/Development/rodnolan/Ant-Build-Script/tools/apache-ant-1.8.2/" />
 	<property name="anthome.win" value="C:\github\ntg\rim_webworks_bb10\StudentFiles\bb10ww\Ant-Build-Script\tools\apache-ant-1.8.2" />
 	<condition property="anthome" value="${anthome.win}" else="${anthome.mac}">
 		<os family="windows"/>
