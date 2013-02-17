@@ -6,7 +6,7 @@
 	<dirname property="buildTasks.basedir" file="${ant.file.buildTasks}"/>
 	<property file="${buildTasks.basedir}/buildTasks.properties"/>
 
-    <condition property="osSpecificPropertiesFileName" value="buildWin.properties" else="buildMac.properties">
+    <condition property="osSpecificPropertiesFileName" value="buildOSWin.properties" else="buildOSMac.properties">
         <os family="windows"/>
     </condition>
     <property file="${buildTasks.basedir}/${osSpecificPropertiesFileName}"/>
@@ -15,6 +15,18 @@
 	<condition property="commandExtension" value=".bat" else="">
 		<os family="windows"/>
 	</condition>
+
+	<!-- pull in all my environment variables -->
+	<property environment="env"/>
+	
+	<!-- Update these paths for your environment -->
+	<property name="anthome.mac" value="/Users/rodnolan/Ant-Build-Script/tools/apache-ant-1.8.2" />
+	<!-- <property name="anthome.win" value="C:\github\ntg\rim_webworks_bb10\StudentFiles\bb10ww\Ant-Build-Script\tools\apache-ant-1.8.2" /> -->
+	<property name="anthome.win" value="${env.ant_home2}" />
+	<condition property="anthome" value="${anthome.win}" else="${anthome.mac}">
+		<os family="windows"/>
+	</condition>
+
 
 
     <!-- Build Tool locations -->
@@ -274,6 +286,11 @@
 		<copy todir="${ripple.dir}">
 			<fileset dir="${build.basedir}"/>
 		</copy>
+
+		<script language="javascript"><![CDATA[
+		    location = "http://localhost:9910/"+project.getProperty('ant.project.name')+"/index.html"; //.toString().replaceAll("\\\\","/")
+		    java.awt.Desktop.getDesktop().browse(java.net.URI.create(location));
+		]]></script>
 	</target>
 
 
