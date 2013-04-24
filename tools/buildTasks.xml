@@ -16,27 +16,15 @@
 		<os family="windows"/>
 	</condition>
 
-	<!-- pull in all my environment variables -->
-	<property environment="env"/>
-	
-	<!-- Update these paths for your environment -->
-	<property name="anthome.mac" value="/Users/rodnolan/Ant-Build-Script/tools/apache-ant-1.8.2" />
-	<!-- <property name="anthome.win" value="C:\github\ntg\rim_webworks_bb10\StudentFiles\bb10ww\Ant-Build-Script\tools\apache-ant-1.8.2" /> -->
-	<property name="anthome.win" value="${env.ant_home2}" />
-	<condition property="anthome" value="${anthome.win}" else="${anthome.mac}">
-		<os family="windows"/>
-	</condition>
 
-
+	<property name="anthome" value="${build.tools.home}\apache-ant-1.8.2" />
 
     <!-- Build Tool locations -->
-    <property name="tools.dir" value="${anthome}/.."/>
+    <!-- <property name="tools.dir" value="${anthome}/.."/> -->
     <!-- must set the ANT_HOME environment variable to X:\Ant-Build-Script\tools\apache-ant-1.8.2 -->
     <!-- also set PATH=%PATH%;%ANT_HOME%\bin -->
-
-    <!--PATH=/Users/rodnolan/Development/rodnolan/BB10-WebWorks-Community-Samples/Ant-Build-Script/tools/apache-ant-1.8.2:$PATH-->
+    <!--PATH=/Users/rodnolan/Development/rodnolan/BB10-WebWorks-Community-Samples/Ant-Build-Script/apache-ant-1.8.2:$PATH-->
     <!--http://techxplorer.com/2011/02/26/installing-apache-ant-on-mac-os-x/-->
-
 
     <!-- this enables the use of if-then-else in the "doBuild" target; see http://ant-contrib.sourceforge.net -->
     <!--<taskdef resource="net/sf/antcontrib/antcontrib.properties" />-->
@@ -288,9 +276,13 @@
 		</copy>
 
 		<script language="javascript"><![CDATA[
-		    location = "http://localhost:9910/"+project.getProperty('ant.project.name')+"/index.html"; //.toString().replaceAll("\\\\","/")
+		    var baseURL = project.getProperty('ripple.baseurl');
+		    //println(baseURL);
+		    //location = "http://localhost/"+project.getProperty('ant.project.name')+"/index.html"; //.toString().replaceAll("\\\\","/")
+		    location = baseURL + "/" + project.getProperty('ant.project.name') + "/index.html"; //.toString().replaceAll("\\\\","/")
 		    java.awt.Desktop.getDesktop().browse(java.net.URI.create(location));
 		]]></script>
+
 	</target>
 
 
@@ -359,7 +351,7 @@
 		<if><equals arg1="${bb10.doDebugToken}" arg2="true" />
             <then>
                 <echo message="creating/refreshing debug token" />
-				<antcall target="buildTasks.createDebugToken.bb10" />
+				<antcall target="buildTasks.createDebugToken.bb10" /> 
 				<antcall target="buildTasks.deployDebugToken.bb10" />
             </then>
         </if>
@@ -367,7 +359,7 @@
 
 	<target name="createDebugToken.bb10">
 		<exec executable="${wwsdk.bb10.dir}/dependencies/tools/bin/blackberry-debugtokenrequest${commandExtension}">
-			<arg line="-storepass ${sign.pw} -devicepin ${bb10.pin} debugtoken.bar"/>
+			<arg line="-storepass ${sign.pw} -devicepin ${bb10.pin} debugtoken.bar"/>			
 		</exec>
 		<move file="debugtoken.bar" todir="${wwsdk.bb10.dir}"/>
 	</target>
@@ -483,11 +475,9 @@
 					</then>
 				</elseif>
 
-				<else><equals arg1="${bb10.deploy.device}" arg2="true" />
-					<then>
-						<echo message="deploying ${bb10.deploy.device} build to BB10 device" />
-						<antcall target="buildTasks.deploy.bb10.device.${bb10.deploy.device}" />
-					</then>
+				<else>
+					<echo message="deploying ${bb10.deploy.device} build to BB10 device" />
+					<antcall target="buildTasks.deploy.bb10.device.${bb10.deploy.device}" />
 				</else>
 				</if>
 
