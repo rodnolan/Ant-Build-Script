@@ -65,7 +65,7 @@
 	<!-- Build Directories, all build assets are kept with the project -->
 	<property name="src.dir" value="${basedir}"/>
 
-	<!-- iused by the lint and minify tools -->
+	<!-- used by the lint and minify tools -->
 	<property name="src.js.dir" value="${basedir}/js"/>
 	<property name="src.css.dir" value="${basedir}/css"/>
 
@@ -277,9 +277,8 @@
 
 		<script language="javascript"><![CDATA[
 		    var baseURL = project.getProperty('ripple.baseurl');
-		    //println(baseURL);
-		    //location = "http://localhost/"+project.getProperty('ant.project.name')+"/index.html"; //.toString().replaceAll("\\\\","/")
-		    location = baseURL + "/" + project.getProperty('ant.project.name') + "/index.html"; //.toString().replaceAll("\\\\","/")
+		    println(baseURL);
+		    location = baseURL + "/" + project.getProperty('ant.project.name') + "/index.html";
 		    java.awt.Desktop.getDesktop().browse(java.net.URI.create(location));
 		]]></script>
 
@@ -347,27 +346,42 @@
 
 
 	<!-- Debug token tasks -->
-    <target name="doDebugToken">
-		<if><equals arg1="${bb10.doDebugToken}" arg2="true" />
+    <target name="createDebugToken">
+		<if><equals arg1="${bb10.createDebugToken}" arg2="true" />
             <then>
-                <echo message="creating/refreshing debug token" />
+                <echo message="creating debug token" />
 				<antcall target="buildTasks.createDebugToken.bb10" /> 
-				<antcall target="buildTasks.deployDebugToken.bb10" />
             </then>
         </if>
 	</target>
-
 	<target name="createDebugToken.bb10">
 		<exec executable="${wwsdk.bb10.dir}/dependencies/tools/bin/blackberry-debugtokenrequest${commandExtension}">
-			<arg line="-storepass ${sign.pw} -devicepin ${bb10.pin} debugtoken.bar"/>			
+			<arg line="-storepass ${sign.pw} -devicepin ${bb10.pin.A} -devicepin ${bb10.pin.B} -devicepin ${bb10.pin.C} debugtoken.bar"/>
 		</exec>
 		<move file="debugtoken.bar" todir="${wwsdk.bb10.dir}"/>
 	</target>
 
+    <target name="deployDebugToken">
+		<if><equals arg1="${bb10.deployDebugToken}" arg2="false" />
+            <then>
+				<echo message="skipping debug token deployment" />
+            </then>
+            <else>
+				<echo message="deploying debug token" />
+				<antcall target="buildTasks.deployDebugToken.bb10" />
+            </else>
+        </if>
+	</target>
 	<target name="deployDebugToken.bb10">
-		<exec executable="${wwsdk.bb10.dir}/dependencies/tools/bin/blackberry-deploy${commandExtension}">
-			<arg line="-installDebugToken '${wwsdk.bb10.dir}/debugtoken.bar' -device ${bb10.ip.device} -password ${bb10.pw}"/>
-		</exec>
+		<for list="${bb10.deployDebugTokenToDevices}" param="deviceid">
+			<sequential>
+				<echo>deploying debug token to ${bb10.ip.device.@{deviceid}}</echo>
+
+ 				<exec executable="${wwsdk.bb10.dir}/dependencies/tools/bin/blackberry-deploy${commandExtension}">
+					<arg line="-installDebugToken '${wwsdk.bb10.dir}/debugtoken.bar' -device ${bb10.ip.device.@{deviceid}} -password ${bb10.pw}"/>
+				</exec>
+			</sequential>
+		</for>
 	</target>
 
 	<target name="createDebugToken.tablet">
